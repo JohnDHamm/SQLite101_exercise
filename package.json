@@ -1,0 +1,23 @@
+{
+  "name": "sqlite101_exercise",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnDHamm/SQLite101_exercise.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JohnDHamm/SQLite101_exercise/issues"
+  },
+  "homepage": "https://github.com/JohnDHamm/SQLite101_exercise#readme",
+  "dependencies": {
+    "cli-table": "^0.3.1",
+    "sqlite3": "^3.1.6"
+  }
+}
