@@ -6,8 +6,16 @@ const Table = require('cli-table');
 const db = new Database('db/Chinook_Sqlite.sqlite');
 
 
+const knex = require('knex')({
+	client: 'sqlite3',
+	connection: {
+		filename: 'db/Chinook_Sqlite.sqlite'
+	},
+	useNullAsDefault: true
+})
 
-db.serialize(() => {
+
+// db.serialize(() => {
 
 	// #1
 	// db.all(`
@@ -56,32 +64,80 @@ db.serialize(() => {
 	// )
 
 
-	// #4
-	db.all(`
-		SELECT Employee.FirstName || " " || Employee.LastName AS "Name"
-		FROM Employee
-		JOIN Customer ON Customer.SupportRepId = Employee.EmployeeId
-		GROUP BY Name;
-		`, (err, salesReps) => {
-			// console.log("name", Name);
-			const salesRepTable = new Table({
-    		head: ['Sales Rep'],
-  			style: { compact: true }
-			});
+	// // #4
+	// db.all(`
+	// 	SELECT Employee.FirstName || " " || Employee.LastName AS "Name"
+	// 	FROM Employee
+	// 	JOIN Customer ON Customer.SupportRepId = Employee.EmployeeId
+	// 	GROUP BY Name;
+	// 	`, (err, salesReps) => {
+	// 		// console.log("name", Name);
+	// 		const salesRepTable = new Table({
+ //    		head: ['Sales Rep'],
+ //  			style: { compact: true }
+	// 		});
 
-			salesRepTable.push(...salesReps.map(i => [i.Name]));
-			console.log("#4 Provide a query showing only the Employees who are Sales Agents.");
-			console.log(salesRepTable.toString());
-		}
-	)
+	// 		salesRepTable.push(...salesReps.map(i => [i.Name]));
+	// 		console.log("#4 Provide a query showing only the Employees who are Sales Agents.");
+	// 		console.log(salesRepTable.toString());
+	// 	}
+	// )
 
-	// now using knex and bookshelf
-	//#5 Provide a query showing a unique list of billing countries from the Invoice table.
-	console.log("#5 Provide a query showing a unique list of billing countries from the Invoice table.");
+// })
 
-
+// db.close() //need for comman line apps
 
 
-})
+// now using knex and bookshelf
+//#5 Provide a query showing a unique list of billing countries from the Invoice table.
+console.log("#5 Provide a query showing a unique list of billing countries from the Invoice table.");
+knex('Invoice').distinct('BillingCountry').orderBy('BillingCountry').then(console.log);
 
-db.close()
+//#6 Provide a query showing the invoices of customers who are from Brazil.
+console.log('Provide a query showing the invoices of customers who are from Brazil.')
+knex('Invoice').where('BillingCountry', 'Brazil').then(console.log)
+
+//#7 Provide a query that shows the invoices associated with each sales agent. The resultant table should include the Sales Agent's full name.
+	// SELECT Employee.FirstName || Employee.LastName As "Sales Agent", Invoice.*
+	// FROM Employee
+	// JOIN Customer On Employee.EmployeeId = Customer.SupportRepId
+	// JOIN Invoice On Customer.CustomerId = Invoice.CustomerId;
+console.log(`Provide a query that shows the invoices associated with each sales agent. The resultant table should include the Sales Agent's full name.`)
+knex('Employee')
+	.join('Customer', 'Employee.EmployeeId', 'Customer.SupportRepId')
+	.join('Invoice', 'Customer.CustomerId', 'Invoice.CustomerId')
+	// .select('Employee.FirstName', 'Employee.LastName', 'Invoice.InvoiceId')
+	.select(knex.raw(`Employee.FirstName || " " || Employee.LastName As "SalesAgent"`), 'Invoice.InvoiceId')
+	.orderBy('SalesAgent')
+	// .then(console.log)
+	.then((data7)=> {
+		const table7 = new Table({
+		    		head: ['Sales Agent', 'Invoice ID'],
+		  			style: { compact: true }
+					});
+
+		data7.forEach(i => {
+			let nextEntry = [i.SalesAgent, i.InvoiceId]
+			table7.push(nextEntry)
+		})
+
+		console.log(table7.toString())
+	})
+
+//#8 Provide a query that shows the Invoice Total, Customer name, Country and Sale Agent name for all invoices and customers.
+	// SELECT Customer.FirstName ||" "|| Customer.LastName As "Customer", Customer.Country, Employee.FirstName || " " || Employee.LastName As "Sales Agent", Invoice.Total
+	// FROM Employee
+	// JOIN Customer On Employee.EmployeeId = Customer.SupportRepId
+	// JOIN Invoice On Customer.CustomerId = Invoice.CustomerId;
+	knex('Invoice')
+		.join('Customer', 'Invoice.CustomerId', 'Customer.CustomerId')
+		.join('Employee', 'Customer.SupportRepId', 'Employee.EmployeeId')
+		.select(knex.raw(`Customer.FirstName || " " || Customer.LastName AS Customer`), 'Customer.Country', knex.raw(`Employee.FirstName || " " || Employee.LastName AS SalesAgent`))
+		.sum('Invoice.Total as Total')
+		.groupBy('Customer.CustomerId')
+		.orderBy('Total', 'desc')
+		.then(console.log)
+
+
+
+knex.destroy();

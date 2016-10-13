@@ -18,6 +18,7 @@
   "homepage": "https://github.com/JohnDHamm/SQLite101_exercise#readme",
   "dependencies": {
     "cli-table": "^0.3.1",
+    "knex": "^0.12.5",
     "sqlite3": "^3.1.6"
   }
 }
